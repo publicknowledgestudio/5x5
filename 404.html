@@ -509,10 +509,14 @@
     <div class="panel">
       <div class="panel-title">Export</div>
       <div class="filename-row">
-        <input type="text" class="filename-input" id="filename" value="icon" spellcheck="false" placeholder="filename">
+        <input type="text" class="filename-input" id="filename" value="" spellcheck="false" placeholder="filename">
         <span class="filename-ext">.svg</span>
       </div>
       <button class="btn primary" id="btn-export">Export SVG</button>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn" id="btn-copy-svg">Copy SVG</button>
+        <button class="btn" id="btn-copy-url">Copy URL</button>
+      </div>
     </div>
 
     <!-- Actions -->
@@ -703,6 +707,9 @@
       if (fgHex !== '000000' || bgHex !== 'ffffff')
         path += `,${fgHex},${bgHex}`;
       history.replaceState(null, '', path);
+
+      // Keep filename in sync with grid code
+      filenameInput.value = encodeGridData(grid);
     }
 
     // --- Build grid cells ---
@@ -771,6 +778,24 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('exported ' + a.download);
+    });
+
+    // --- Copy SVG markup ---
+    document.getElementById('btn-copy-svg').addEventListener('click', () => {
+      const svg = generateSVGFromGrid(grid, colorFg.value, colorBg.value);
+      navigator.clipboard.writeText(svg).then(() => showToast('svg copied'));
+    });
+
+    // --- Copy SVG URL ---
+    document.getElementById('btn-copy-url').addEventListener('click', () => {
+      let svgPath = BASE + '/' + encodeGridData(grid);
+      const fgHex = colorFg.value.slice(1);
+      const bgHex = colorBg.value.slice(1);
+      if (fgHex !== '000000' || bgHex !== 'ffffff')
+        svgPath += `,${fgHex},${bgHex}`;
+      svgPath += '.svg';
+      const url = location.origin + svgPath;
+      navigator.clipboard.writeText(url).then(() => showToast('url copied'));
     });
 
     // --- Clear ---
