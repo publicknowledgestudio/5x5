@@ -577,11 +577,30 @@
     return `<svg width="5" height="5" viewBox="0 0 5 5" fill="none" xmlns="http://www.w3.org/2000/svg">\n<g clip-path="url(#${id})">\n${rects}</g>\n<defs>\n<clipPath id="${id}">\n<rect width="5" height="5" fill="white"/>\n</clipPath>\n</defs>\n</svg>`;
   }
 
-  // --- Route: parse path ---
+  // --- Route: detect base path and parse grid code ---
+  function isValidGridCode(s) {
+    if (s.length !== 7) return false;
+    for (let i = 0; i < 7; i++) if (B64.indexOf(s[i]) === -1) return false;
+    return true;
+  }
+
+  function getBasePath() {
+    const p = location.pathname.replace(/\/$/, '');
+    const lastSeg = p.split('/').pop() || '';
+    const candidate = lastSeg.replace(/\.svg$/, '').split(',')[0];
+    if (isValidGridCode(candidate)) {
+      return p.slice(0, p.lastIndexOf('/'));
+    }
+    return p;
+  }
+
+  const BASE = getBasePath();
+
   function parsePath() {
-    const path = location.pathname.replace(/^\//, '').replace(/\.svg$/, '');
-    const isSvg = location.pathname.endsWith('.svg');
-    const parts = path.split(',');
+    const raw = location.pathname.slice(BASE.length).replace(/^\//, '').replace(/\/$/, '');
+    const isSvg = raw.endsWith('.svg');
+    const clean = raw.replace(/\.svg$/, '');
+    const parts = clean.split(',');
     const code = parts[0] || '';
     const fg = parts[1] ? '#' + parts[1] : '#000000';
     const bg = parts[2] ? '#' + parts[2] : '#ffffff';
@@ -678,7 +697,7 @@
       }
 
       // Sync URL path
-      let path = '/' + encodeGridData(grid);
+      let path = BASE + '/' + encodeGridData(grid);
       const fgHex = fg.slice(1);
       const bgHex = bg.slice(1);
       if (fgHex !== '000000' || bgHex !== 'ffffff')
